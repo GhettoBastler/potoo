@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{SITE_NAME} - {PAGE_TITLE}</title>
+        <link rel="stylesheet" href="style/style.css">
+        <meta name="description" content="{PAGE_DESCRIPTION}">
+    </head>
+    <body>
+        <header>
+            <nav>
+                <div id="home-link">
+                    <a href="{SITE_URL}/">{SITE_NAME}</a>
+                </div>
+                {NAV_HTML}
+            </nav>
+        </header>
+        <main>
+            <section id="main-content">
+                {HEADER_IMG_HTML}
+                <article>
+                <h1 id="title">{PAGE_TITLE}</h1>
+                    {CONTENT_HTML}
+                </article>
+            </section>
+                {CHILDREN_HTML}
+        </main>
+        <footer>
+            <!-- add footer information here -->
+        </footer>
+    </body>
+</html>
