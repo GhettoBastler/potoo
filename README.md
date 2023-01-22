@@ -5,7 +5,9 @@ A haphazardly made static site generator.
 ## Disclamer
 
 This program was written specifically for my use case and might not work for yours. I'm sharing it here for others to learn from it, but you shouldn't expect it to work *out of the box*.
+
 It wasn't made with customization in mind, so changing the look of the website means editing `template.html` and `generator.py` directly.
+
 **Several directories are deleted/overwritten without prompting the user for confirmation**, so always keep a backup of your source files.
 
 ## Requirements
