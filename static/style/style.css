@@ -59,6 +59,8 @@ header nav{
     display: grid;
     background-color: var(--ln-color);
     place-items: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 #home-link a{
@@ -129,6 +131,12 @@ h3{
     font-size: 30px;
     margin-top: 15px;
     margin-bottom: 15px;
+}
+
+h4{
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 #header-img{
