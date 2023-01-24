@@ -251,6 +251,13 @@ def generate_page(name, template, pages, navigation, links, md_parser):
         header_img_html = '<img id="header-img" src="'
         header_img_html += str(links[meta['header'][0]])
         header_img_html += '">\n'
+
+        # Creating header caption (if any)
+        if 'header-caption' in meta:
+            header_img_html += '<figcaption>'
+            header_img_html += meta['header-caption'][0]
+            header_img_html += '</figcaption>'
+
         fields['HEADER_IMG_HTML'] = header_img_html
 
     # Updating page title
