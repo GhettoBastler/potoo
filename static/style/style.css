@@ -146,6 +146,12 @@ h4{
     object-position: center;
     border-radius: 0;
 }
+
+#header-caption{
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
 #title{
     text-align: center;
 }
@@ -243,6 +249,7 @@ pre{
     color: var(--bg-color2);
     border-radius: 5px;
     padding: 20px;
+    overflow-x: scroll;
 }
 
 table{

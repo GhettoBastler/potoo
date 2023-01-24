@@ -254,7 +254,7 @@ def generate_page(name, template, pages, navigation, links, md_parser):
 
         # Creating header caption (if any)
         if 'header-caption' in meta:
-            header_img_html += '<figcaption>'
+            header_img_html += '<figcaption id="header-caption">'
             header_img_html += meta['header-caption'][0]
             header_img_html += '</figcaption>'
 
