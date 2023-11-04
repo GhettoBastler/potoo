@@ -21,11 +21,27 @@ def urlize(text):
     return re.sub(f'[^{CHAR_WHITELIST}]', '_', text.lower())
 
 
+def extract_title(path):
+    """
+    Reads a Markdown file and extract the page title, if any.
+    Stop looking after encountering a newline.
+    """
+    res = ''
+    with open(path, 'r') as f:
+        for line in f.readlines():
+            if len(line.strip()) == 0:
+                break
+            if line[:6] == 'title:':
+                res = line[6:].strip()
+    return res
+
+
 def parse_input_directory(path):
     """
     Takes a pathlib.Path object. Returns 3 objects:
-        - a pages dictionary: keys are page names (str), values are 2-tuples:
+        - a pages dictionary: keys are page names (str), values are 3-tuples:
                 - path_to_markdown_file (Path object)
+                - title of the page (string)
                 - path_to_output_file (Path object)
 
         - a navigation dictionary: keys are page names (str), and values
@@ -58,7 +74,10 @@ def parse_input_directory(path):
                 else:
                     # This is a note, add it to the list of pages to convert
                     output_path = pathlib.Path(urlize(item.stem) + '.html')
-                    pages[item.stem] = (item, output_path)
+                    title = extract_title(item)
+                    if not title:
+                        title = item.stem
+                    pages[item.stem] = (item, title, output_path)
 
             else:
                 # This is a media file
@@ -78,13 +97,18 @@ def parse_input_directory(path):
             description_file = item / (item.stem + '.md')
             if not description_file.exists():
                 description_file = None
+                title = item.stem
+            else:
+                title = extract_title(description_file)
+                if not title:
+                    title = item.stem
 
             if is_root:
                 output_path = pathlib.Path('index.html')
             else:
                 output_path = pathlib.Path(urlize(item.stem) + '.html')
 
-            pages[item.stem] = (description_file, output_path)
+            pages[item.stem] = (description_file, title, output_path)
 
         navigation[item.parent.stem][1].append(item.stem)
 
@@ -168,25 +192,25 @@ def make_navbar(name, meta, navigation, links):
         for i, curr_level in enumerate(ancestors):
             nav_html += '<ul>\n'
             for ancestor, active in curr_level:
-                nav_html += f'\t<li><a href={links[ancestor]}'
+                nav_html += f'\t<li><a href={links[ancestor][0]}'
                 if active:
                     nav_html += ' class="active"'
-                nav_html += f'>{ancestor}</a></li>\n'
+                nav_html += f'>{links[ancestor][1]}</a></li>\n'
             nav_html += '</ul>\n'
 
     if siblings:
         nav_html += '<ul>\n'
         for sibling in siblings:
-            nav_html += f'\t<li><a href={links[sibling]}'
+            nav_html += f'\t<li><a href={links[sibling][0]}'
             if sibling == name:
                 nav_html += ' class="active"'
-            nav_html += f'>{sibling}</a></li>\n'
+            nav_html += f'>{links[sibling][1]}</a></li>\n'
         nav_html += '</ul>\n'
 
     if children:
         nav_html += '<ul>\n'
         for child in children:
-            nav_html += f'\t<li><a href={links[child]}>{child}</a></li>\n'
+            nav_html += f'\t<li><a href={links[child][0]}>{links[child][1]}</a></li>\n'
         nav_html += '</ul>\n'
 
     nav_html += '</div>\n'
@@ -204,9 +228,9 @@ def make_children_listing(children_meta, links):
     html = '<section id="category-listing">\n'
     for name, title, description, header in children_meta:
         entry = f'<div class="entry">\n'
-        entry += f'<a href="{links[name]}">\n'
+        entry += f'<a href="{links[name][0]}">\n'
         if header:
-            entry += f'<img src={links[header]}>\n'
+            entry += f'<img src={links[header][0]}>\n'
         entry += f'<div class="entry-text">\n'
         entry += f'<p class="entry-title">{title}</p>\n'
         if description:
@@ -236,7 +260,7 @@ def generate_page(name, template, pages, navigation, links, md_parser):
     }
 
     # If this is the index page, change the title to "home"
-    if links[name].name == 'index.html':
+    if links[name][0].name == 'index.html':
         fields['PAGE_TITLE'] = 'home'
 
     # Parsing Markdown
@@ -249,7 +273,7 @@ def generate_page(name, template, pages, navigation, links, md_parser):
     # Creating header image (if any)
     if 'header' in meta:
         header_img_html = '<img id="header-img" src="'
-        header_img_html += str(links[meta['header'][0]])
+        header_img_html += str(links[meta['header'][0]][0])
         header_img_html += '">\n'
 
         # Creating header caption (if any)
@@ -290,7 +314,7 @@ def generate_page(name, template, pages, navigation, links, md_parser):
     res = template.format(**fields)
 
     # Generating HTML file
-    write_html(res, pages[name][1])
+    write_html(res, pages[name][2])
 
     # Return page's meta data
     title = fields['PAGE_TITLE']
@@ -309,13 +333,18 @@ def write_html(html, dst_path):
 
 def make_links(pages, media):
     """
-    Generates a the translation dictionary.
-    Keys are page name/media filename, values are output path
+    Generates a translation dictionary.
+    Keys are page name/media filename, values are output paths and title
+    (what to display in the navbar text)
     """
-    links = dict((name, pages[name][1]) for name in pages)
+    links = {}
+    for name in pages:
+        title = pages[name][1]
+        path = pages[name][2]
+        links[name] = (path, title)
     # Add media links
     for src, dst in media:
-        links[src.name] = dst
+        links[src.name] = (dst, src.name)
     return links
 
 
@@ -325,9 +354,9 @@ def main(input_path):
     print(f'Found {len(pages)} pages to generate,'
           f' and {len(media)} non-markdown files to copy')
     links = make_links(pages, media)
-
+    obs_links = dict((name, links[name][0]) for name in links)
     md_parser = markdown.Markdown(extensions=[
-        Obsidian(links=links),
+        Obsidian(links=obs_links),
         'fenced_code',
         'meta',
         'tables',
@@ -336,7 +365,7 @@ def main(input_path):
     with open(config.TEMPLATE_FILE, 'r') as f:
         template = f.read()
 
-    root_page = [name for name in pages if pages[name][1].stem == 'index'][0]
+    root_page = [name for name in pages if pages[name][2].stem == 'index'][0]
 
     print()
     print('Generating pages...')
